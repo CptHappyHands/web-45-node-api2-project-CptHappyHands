@@ -53,23 +53,57 @@ router.post('/api/posts', (req, res) => {
 })
 
 router.put('/api/posts/:id', async (req, res) => {
-    const changes = req.body
-    const { id } = req.params
-    try {
-        const possiblePost = await Posts.findById(req.params.id)
-        if (!possiblePost) {
-            res.status(404).json({ message: "The post with the specified ID does not exist" })
-        } else if (!changes.title || !changes.contents) {
-        res.status(400).json({ message: "Please provide title and contents for the post" })
+    const { title, contents } = req.body
+    if (!title || !contents) {
+        res.status(400).json({
+            message: "Please provide title and contents for the post"
+        })
     } else {
-        const result = await Posts.update(id, changes)
-        res.status(200).json(result)
-        console.log(id)
-        
+        Posts.findById(req.params.id)
+            .then((posts) => {
+                if (!posts) {
+                    res.status(404).json({
+                        message: "The post with the specified ID does not exist"
+                    })
+                } else {
+                    return Posts.update(req.params.id, req.body)
+                }
+            })
+            .then((data) => {
+                if (data) {
+                    return Posts.findById(req.params.id, req.body)
+                }
+            })
+            .then((moreData) => {
+                if (moreData) {
+                    res.json(moreData)
+                }
+            })
+            .catch((error) => {
+                console.log(error)
+                res.status(500).json({
+                    message: "The post information could not be modified"
+                })
+            })
     }
-        } catch (err) {
-    res.status(500).json({ message: "The post information could not be modified" })
-}
+
+    //     const changes = req.body
+//     const { id } = req.params
+//     try {
+//         const possiblePost = await Posts.findById(req.params.id)
+//         if (!possiblePost) {
+//             res.status(404).json({ message: "The post with the specified ID does not exist" })
+//         } else if (!changes.title || !changes.contents) {
+//         res.status(400).json({ message: "Please provide title and contents for the post" })
+//     } else {
+//         const result = await Posts.update(id, changes)
+//         res.status(200).json(result)
+//         console.log(id)
+        
+//     }
+//         } catch (err) {
+//     res.status(500).json({ message: "The post information could not be modified" })
+// }
 })
 
 router.delete('/api/posts/:id', async (req, res) => {
